@@ -18,5 +18,10 @@ ATTRS{idVendor}=="0483", ATTRS{idProduct}=="3748", TAG+="uaccess"
 ATTRS{idVendor}=="0483", ATTRS{idProduct}=="374b", TAG+="uaccess"
 ```
 
+generate rgb565 rawfile using
+```
+ffmpeg -vcodec png -i image.png -vcodec rawvideo -f rawvideo -pix_fmt rgb565 image.raw
+```
+
 # LICENSE
 GPL-3.0

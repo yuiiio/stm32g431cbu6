@@ -41,15 +41,16 @@ fn main() -> ! {
     let clocks = rcc
         .cfgr
         .use_hse(25.MHz())
-        .sysclk(48.MHz())
-        .pclk1(24.MHz())
-        .pclk2(24.MHz())
+        .sysclk(84.MHz())
+        .hclk(84.MHz())
+        .pclk1(42.MHz())
+        .pclk2(84.MHz())
         .freeze();
 
     let gpioc = dp.GPIOC.split();
     
     let mut led_blue = gpioc.pc13.into_push_pull_output();
-    led_blue.set_low();
+    led_blue.set_high();
 
     let gpiob = dp.GPIOB.split();
 
@@ -91,9 +92,11 @@ fn main() -> ! {
 
 
     loop {
+        /*
         led_blue.set_high();
         cp_delay.delay_ms(500_u32);
         led_blue.set_low();
         cp_delay.delay_ms(500_u32);
+        */
     }
 }
