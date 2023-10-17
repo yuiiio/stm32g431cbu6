@@ -23,6 +23,9 @@ fn main() -> ! {
     let dp = pac::Peripherals::take().unwrap();
     let cp = cortex_m::peripheral::Peripherals::take().unwrap();
 
+    // SPI1 (max 42 Mbit/s)
+    // SPI2 (max 21 Mbit/s)
+
     /*
     let rcc = dp.RCC.constrain();
     
