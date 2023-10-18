@@ -92,36 +92,31 @@ fn main() -> ! {
     // draw image on black background
     display.clear(Rgb565::BLACK).unwrap();
     ferris.draw(&mut display).unwrap();
-    cp_delay.delay_ms(500_u32);
+    //cp_delay.delay_ms(500_u32);
     
-    // line
-    let binary_pixel_buffer: &mut [u8; 240] = &mut [0; 240];
+    led_blue.set_high(); // disable led
 
-
-    for i in 0..240 {
-        binary_pixel_buffer[i] = (((i as f32 / 240.0 * 2.0 * PI).sin() + 1.0) / 2.0 * 240.0) as u8;
-    }
-
-    display.clear(Rgb565::BLACK).unwrap();
-
-    for i in 0..240 {
-        let value = binary_pixel_buffer[i as usize] as u8;
-        for pos in 0.. value { 
-            display.set_pixel(i+80, pos as u16, 0b1111111111111111).ok();
-        }
-    }
-
-
-
-    led_blue.set_high(); // led off
-
-
+    let mut num: u8 = 0;
     loop {
-        /*
-        led_blue.set_high();
-        cp_delay.delay_ms(500_u32);
-        led_blue.set_low();
-        cp_delay.delay_ms(500_u32);
-        */
+        let binary_pixel_buffer: &mut [u8; 240] = &mut [0; 240];
+
+        for i in 0..240 {
+            binary_pixel_buffer[i] = ((((i + num as usize) as f32 / 240.0 * 2.0 * PI).sin() + 1.0) / 2.0 * 240.0) as u8;
+        }
+
+        display.clear(Rgb565::BLACK).unwrap();
+
+        for i in 0..240 {
+            let value = binary_pixel_buffer[i as usize] as u8;
+            for pos in 0.. value { 
+                display.set_pixel(i+80, pos as u16, 0b1111111111111111).ok();
+            }
+        }
+
+        if num >= 240 {
+            num = 0;
+        } else {
+            num = num + 24;
+        }
     }
 }
