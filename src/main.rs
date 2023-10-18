@@ -99,7 +99,7 @@ fn main() -> ! {
 
 
     for i in 0..240 {
-        binary_pixel_buffer[i] = ((i as f32 / 240.0 * PI).sin() * 240.0) as u8;
+        binary_pixel_buffer[i] = (((i as f32 / 240.0 * 2.0 * PI).sin() + 1.0) / 2.0 * 240.0) as u8;
     }
 
     display.clear(Rgb565::BLACK).unwrap();
