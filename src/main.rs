@@ -98,13 +98,36 @@ fn main() -> ! {
 
     display.clear(Rgb565::BLACK).unwrap();
 
-    let buffer: &mut [u8; 240] = &mut [0; 240];
+    let buffer1: &mut [u8; 240] = &mut [0; 240];
+    let buffer2: &mut [u8; 240] = &mut [0; 240];
     let mut num: u8 = 0;
+    let mut flip: bool = true;
     loop {
+        let mut buffer: &mut [u8; 240] = &mut [0; 240];
+        let mut prev: &mut [u8; 240] = &mut [0; 240];
+        if flip == true {
+            buffer = buffer1;
+            prev = buffer2;
+            flip = false;
+        } else {
+            buffer = buffer2;
+            prev = buffer1;
+            flip = true;
+        }
+
         for i in 0..240 {
             buffer[i] = ((((i + num as usize) as f32 / 240.0 * 2.0 * PI).sin() + 1.0) / 2.0 * 240.0) as u8;
         }
+        
+        // clear
+        for i in 0..240 {
+            let value = prev[i as usize] as u8;
+            //for pos in 0.. value { 
+                display.set_pixel(i+80, value as u16, 0b0000000000000000).ok();
+            //}
+        }
 
+        // draw
         for i in 0..240 {
             let value = buffer[i as usize] as u8;
             //for pos in 0.. value { 
@@ -112,20 +135,12 @@ fn main() -> ! {
             //}
         }
 
-        cp_delay.delay_ms(16_u32);
-        
-        // clear
-        for i in 0..240 {
-            let value = buffer[i as usize] as u8;
-            //for pos in 0.. value { 
-                display.set_pixel(i+80, value as u16, 0b0000000000000000).ok();
-            //}
-        }
+        //cp_delay.delay_ms(16_u32);
 
         if num >= 240 {
             num = 0;
         } else {
-            num = num + 12;
+            num = num + 1;
         }
     }
 }
