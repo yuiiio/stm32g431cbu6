@@ -73,7 +73,7 @@ fn main() -> ! {
     let spi_sclk = gpiob.pb3.into_alternate().speed(Speed::VeryHigh);
 
     
-    let spi = Spi::new(dp.SPI1, (spi_sclk, NoMiso::new(), spi_mosi), embedded_hal::spi::MODE_3, 16.MHz(), &clocks);
+    let spi = Spi::new(dp.SPI1, (spi_sclk, NoMiso::new(), spi_mosi), embedded_hal::spi::MODE_3, 42.MHz(), &clocks);
     
     // display interface abstraction from SPI and DC
     let di = SPIInterfaceNoCS::new(spi, dc);
