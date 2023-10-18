@@ -145,8 +145,12 @@ fn main() -> ! {
             flip = true;
         }
 
+        // raw adc_in is 12bit >> 4 => 8bit
+        // u8 max is 255
+        // need clamp or scale to 240
         for i in 0..240 {
-            buffer[i] = (adc_results[i] >> 4) as u8;
+            let adc_8bit: u8 = (adc_results[i] >> 4) as u8;
+            buffer[i] = if adc_8bit > 239 { 239 } else { adc_8bit };
         }
         
         // clear
