@@ -96,27 +96,36 @@ fn main() -> ! {
     
     led_blue.set_high(); // disable led
 
+    display.clear(Rgb565::BLACK).unwrap();
+
+    let buffer: &mut [u8; 240] = &mut [0; 240];
     let mut num: u8 = 0;
     loop {
-        let binary_pixel_buffer: &mut [u8; 240] = &mut [0; 240];
-
         for i in 0..240 {
-            binary_pixel_buffer[i] = ((((i + num as usize) as f32 / 240.0 * 2.0 * PI).sin() + 1.0) / 2.0 * 240.0) as u8;
+            buffer[i] = ((((i + num as usize) as f32 / 240.0 * 2.0 * PI).sin() + 1.0) / 2.0 * 240.0) as u8;
         }
 
-        display.clear(Rgb565::BLACK).unwrap();
-
         for i in 0..240 {
-            let value = binary_pixel_buffer[i as usize] as u8;
-            for pos in 0.. value { 
-                display.set_pixel(i+80, pos as u16, 0b1111111111111111).ok();
-            }
+            let value = buffer[i as usize] as u8;
+            //for pos in 0.. value { 
+                display.set_pixel(i+80, value as u16, 0b1111111111111111).ok();
+            //}
+        }
+
+        cp_delay.delay_ms(16_u32);
+        
+        // clear
+        for i in 0..240 {
+            let value = buffer[i as usize] as u8;
+            //for pos in 0.. value { 
+                display.set_pixel(i+80, value as u16, 0b0000000000000000).ok();
+            //}
         }
 
         if num >= 240 {
             num = 0;
         } else {
-            num = num + 24;
+            num = num + 12;
         }
     }
 }
