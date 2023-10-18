@@ -10,6 +10,9 @@ extern crate cortex_m;
 extern crate cortex_m_rt;
 extern crate stm32f4xx_hal as hal;
 
+use core::f32::consts::{PI};
+use micromath::F32Ext;
+
 use hal::{
     pac,
     gpio::{Speed, PinState},
@@ -50,7 +53,7 @@ fn main() -> ! {
     let gpioc = dp.GPIOC.split();
     
     let mut led_blue = gpioc.pc13.into_push_pull_output();
-    led_blue.set_high();
+    led_blue.set_low();
 
     let gpiob = dp.GPIOB.split();
 
@@ -89,6 +92,28 @@ fn main() -> ! {
     // draw image on black background
     display.clear(Rgb565::BLACK).unwrap();
     ferris.draw(&mut display).unwrap();
+    cp_delay.delay_ms(500_u32);
+    
+    // line
+    let binary_pixel_buffer: &mut [u8; 240] = &mut [0; 240];
+
+
+    for i in 0..240 {
+        binary_pixel_buffer[i] = ((i as f32 / 240.0 * PI).sin() * 240.0) as u8;
+    }
+
+    display.clear(Rgb565::BLACK).unwrap();
+
+    for i in 0..240 {
+        let value = binary_pixel_buffer[i as usize] as u8;
+        for pos in 0.. value { 
+            display.set_pixel(i+80, pos as u16, 0b1111111111111111).ok();
+        }
+    }
+
+
+
+    led_blue.set_high(); // led off
 
 
     loop {
