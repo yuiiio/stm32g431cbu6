@@ -14,10 +14,15 @@ use core::f32::consts::{PI};
 use micromath::F32Ext;
 
 use hal::{
-    pac,
+    pac::{self, ADC1},
     gpio::{Speed, PinState},
     prelude::*,
     spi::*,
+    adc::{
+        config::{AdcConfig, Clock, Dma, Resolution, SampleTime, Scan, Sequence},
+        Adc,
+    },
+    dma::{config::DmaConfig, PeripheralToMemory, Stream0, StreamsTuple, Transfer},
 };
 
 //use cortex_m::asm;
@@ -98,11 +103,36 @@ fn main() -> ! {
 
     display.clear(Rgb565::BLACK).unwrap();
 
+    // setup GPIOA
+    let gpioa = dp.GPIOA.split();
+
+    // Configure pa0 as an analog input
+    let adc_ch0 = gpioa.pa0.into_analog();
+
+    let adc_config = AdcConfig::default()
+            //.dma(Dma::Continuous)
+            //Scan mode is also required to convert a sequence
+            .scan(Scan::Enabled)
+            .resolution(Resolution::Twelve)
+            .clock(Clock::Pclk2_div_4); // 84 / 4 = 21MHz need more down ? (adc max datasheet says
+                                        // 36MHz)
+                                        // 12-bit resolution single ADC 2 Msps
+
+    // setup ADC
+    let mut adc = Adc::adc1(dp.ADC1, true, adc_config);
+
+    //adc.configure_channel(&adc_ch0, Sequence::One, SampleTime::Cycles_480); // need 480 cycles from datasheet
+
     let buffer1: &mut [u8; 240] = &mut [0; 240];
     let buffer2: &mut [u8; 240] = &mut [0; 240];
     let mut num: u8 = 0;
     let mut flip: bool = true;
     loop {
+        let adc_results: &mut [u16; 240] = &mut [0; 240];
+        for i in 0..240 {
+            adc_results[i] = adc.convert(&adc_ch0, SampleTime::Cycles_480);
+        }
+
         let mut buffer: &mut [u8; 240] = &mut [0; 240];
         let mut prev: &mut [u8; 240] = &mut [0; 240];
         if flip == true {
@@ -116,7 +146,7 @@ fn main() -> ! {
         }
 
         for i in 0..240 {
-            buffer[i] = ((((i + num as usize) as f32 / 240.0 * 2.0 * PI).sin() + 1.0) / 2.0 * 240.0) as u8;
+            buffer[i] = (adc_results[i] >> 4) as u8;
         }
         
         // clear
