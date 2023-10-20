@@ -125,7 +125,6 @@ fn main() -> ! {
 
     let buffer1: &mut [u8; 240] = &mut [0; 240];
     let buffer2: &mut [u8; 240] = &mut [0; 240];
-    let mut num: u8 = 0;
     let mut flip: bool = true;
     loop {
         let adc_results: &mut [u16; 240] = &mut [0; 240];
@@ -169,12 +168,6 @@ fn main() -> ! {
             //}
         }
 
-        //cp_delay.delay_ms(16_u32);
-
-        if num >= 240 {
-            num = 0;
-        } else {
-            num = num + 1;
-        }
+        cp_delay.delay_ms(1600_u32);
     }
 }
