@@ -129,13 +129,13 @@ fn main() -> ! {
     let buffer2: &mut [u8; 240] = &mut [0; 240];
     let mut flip: bool = true;
     loop {
-        let adc_results: &mut [u16; 240] = &mut [0; 240];
-        for i in 0..240 {
+        let adc_results: &mut [u16; 256] = &mut [0; 256];
+        for i in 0..256 {
             adc_results[i] = adc.convert(&adc_ch0, SampleTime::Cycles_480);
         }
 
         let mut samples: [f32; 256] = [0.0; 256];
-        for i in 0..240 {
+        for i in 0..256 {
             samples[i] = adc_results[i] as f32;
         }
 
@@ -165,7 +165,9 @@ fn main() -> ! {
         }
 
         for i in 0..128 { // show fft result
-            buffer[i] = (amplitudes[i] as f32 / max as f32 * 240.0) as u8;
+            // buffer[i] = (amplitudes[i] as f32 / max as f32 * 240.0) as u8;
+            let adc_8bit: u8 = (amplitudes[i] >> 4) as u8;
+            buffer[i] = if adc_8bit > 239 { 239 } else { adc_8bit };
         }
 
         for i in 128..240 { // show raw input in free space
@@ -192,6 +194,6 @@ fn main() -> ! {
             //}
         }
 
-        cp_delay.delay_ms(1600_u32);
+        cp_delay.delay_ms(1000_u32);
     }
 }
