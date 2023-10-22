@@ -36,6 +36,8 @@ use embedded_graphics::pixelcolor::Rgb565;
 use embedded_graphics::prelude::*;
 use st7789::{Orientation, ST7789};
 
+use microfft;
+
 #[entry]
 fn main() -> ! {
     let dp = pac::Peripherals::take().unwrap();
@@ -132,6 +134,14 @@ fn main() -> ! {
             adc_results[i] = adc.convert(&adc_ch0, SampleTime::Cycles_480);
         }
 
+        let mut samples: [f32; 256] = [0.0; 256];
+        for i in 0..240 {
+            samples[i] = adc_results[i] as f32;
+        }
+
+        let spectrum = microfft::real::rfft_256(&mut samples);
+        spectrum[0].im = 0.0;
+
         let mut buffer: &mut [u8; 240] = &mut [0; 240];
         let mut prev: &mut [u8; 240] = &mut [0; 240];
         if flip == true {
@@ -144,10 +154,24 @@ fn main() -> ! {
             flip = true;
         }
 
-        // raw adc_in is 12bit >> 4 => 8bit
-        // u8 max is 255
-        // need clamp or scale to 240
-        for i in 0..240 {
+        let mut max: u32 = 0;
+        let mut amplitudes: [u32; 240] = [0; 240];
+        for i in 0..128 { // 128 ~ 240 should 00
+            amplitudes[i] = spectrum[i].l1_norm() as u32;
+
+            if amplitudes[i] > max {
+                max = amplitudes[i];
+            }
+        }
+
+        for i in 0..128 { // show fft result
+            buffer[i] = (amplitudes[i] as f32 / max as f32 * 240.0) as u8;
+        }
+
+        for i in 128..240 { // show raw input in free space
+            // raw adc_in is 12bit >> 4 => 8bit
+            // u8 max is 255
+            // need clamp or scale to 240
             let adc_8bit: u8 = (adc_results[i] >> 4) as u8;
             buffer[i] = if adc_8bit > 239 { 239 } else { adc_8bit };
         }
