@@ -237,21 +237,21 @@ fn main() -> ! {
 
         let mut max: u32 = 0;
         let mut amplitudes: [u32; 240] = [0; 240];
-        for i in 0..128 { // 128 ~ 240 should 00
-            amplitudes[i] = ((fr[i].abs() + fi[i].abs()) as u32 ) << 4;
+        for i in 0..NUM_SAMPLES/2 { // 128 ~ 240 should 00
+            amplitudes[i] = ((fr[i].abs() + fi[i].abs()) as u32 ) << 5;
 
             if amplitudes[i] > max {
                 max = amplitudes[i];
             }
         }
 
-        for i in 0..128 { // show fft result
+        for i in 0..NUM_SAMPLES/2 { // show fft result
             // buffer[i] = (amplitudes[i] as f32 / max as f32 * 240.0) as u8;
             let adc_8bit: u8 = (amplitudes[i] >> 4) as u8;
             buffer[i] = if adc_8bit > 239 { 239 } else { adc_8bit };
         }
 
-        for i in 128..240 { // show raw input in free space
+        for i in NUM_SAMPLES/2..240 { // show raw input in free space
             // raw adc_in is 12bit >> 4 => 8bit
             // u8 max is 255
             // need clamp or scale to 240
