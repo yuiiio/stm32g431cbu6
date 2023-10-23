@@ -140,7 +140,7 @@ fn main() -> ! {
         }
 
         let spectrum = microfft::real::rfft_256(&mut samples);
-        spectrum[0].im = 0.0;
+        spectrum[0].im = 0.0; // need ?
 
         let mut buffer: &mut [u8; 240] = &mut [0; 240];
         let mut prev: &mut [u8; 240] = &mut [0; 240];
@@ -157,7 +157,7 @@ fn main() -> ! {
         let mut max: u32 = 0;
         let mut amplitudes: [u32; 240] = [0; 240];
         for i in 0..128 { // 128 ~ 240 should 00
-            amplitudes[i] = spectrum[i].re.abs() as u32;
+            amplitudes[i] = (spectrum[i].re.abs() + spectrum[i].im.abs()) as u32;
 
             if amplitudes[i] > max {
                 max = amplitudes[i];
