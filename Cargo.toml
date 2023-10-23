@@ -24,8 +24,6 @@ display-interface-spi = "0.4"
 embedded-graphics = "0.7"
 st7789 = { version = "0.6", features = ["batch"] }
 
-microfft = "0.5.1"
-
 [dependencies.stm32f4xx-hal]
 features = ["stm32f401", "rt"]
 version = "0.17.1"
