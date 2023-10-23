@@ -210,8 +210,8 @@ fn main() -> ! {
     let buffer2: &mut [u8; 240] = &mut [0; 240];
     let mut flip: bool = true;
     loop {
-        let adc_results: &mut [u16; 256] = &mut [0; 256];
-        for i in 0..256 {
+        let adc_results: &mut [u16; NUM_SAMPLES] = &mut [0; NUM_SAMPLES];
+        for i in 0..NUM_SAMPLES {
             adc_results[i] = adc.convert(&adc_ch0, SampleTime::Cycles_480);
         }
 
@@ -238,7 +238,7 @@ fn main() -> ! {
         let mut max: u32 = 0;
         let mut amplitudes: [u32; 240] = [0; 240];
         for i in 0..128 { // 128 ~ 240 should 00
-            amplitudes[i] = (fr[i].abs() + fi[i].abs()) as u32;
+            amplitudes[i] = ((fr[i].abs() + fi[i].abs()) as u32 ) << 4;
 
             if amplitudes[i] > max {
                 max = amplitudes[i];
