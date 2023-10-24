@@ -236,7 +236,7 @@ fn main() -> ! {
         }
 
         let mut max: u32 = 0;
-        let mut amplitudes: [u32; 240] = [0; 240];
+        let mut amplitudes: [u32; NUM_SAMPLES/2] = [0; NUM_SAMPLES/2];
         for i in 0..NUM_SAMPLES/2 { // 128 ~ 240 should 00
             amplitudes[i] = ((fr[i].abs() + fi[i].abs()) as u32 ) << 5;
 
@@ -255,7 +255,7 @@ fn main() -> ! {
             // raw adc_in is 12bit >> 4 => 8bit
             // u8 max is 255
             // need clamp or scale to 240
-            let adc_8bit: u8 = (adc_results[i] >> 4) as u8;
+            let adc_8bit: u8 = (adc_results[i - (NUM_SAMPLES/2)] >> 4) as u8;
             buffer[i] = if adc_8bit > 239 { 239 } else { adc_8bit };
         }
         
