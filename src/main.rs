@@ -259,9 +259,9 @@ fn main() -> ! {
             buffer[(NUM_SAMPLES/2) + i] = if adc_8bit > 239 { 239 } else { adc_8bit };
         }
 
-        let pulse_strength: u8 = ((amplitudes[2] + amplitudes[4] + amplitudes[6] + amplitudes[8]) >> 5) as u8; // depend ball pulse
+        let pulse_strength: u16 = ((amplitudes[2] + amplitudes[4] + amplitudes[6] + amplitudes[8]) >> 5) as u16; // depend ball pulse
         for i in ((NUM_SAMPLES/2) + NUM_SAMPLES)..240 {
-            buffer[i] = if pulse_strength > 239 { 239 } else { pulse_strength };
+            buffer[i] = if pulse_strength > 239 { 239 } else { pulse_strength as u8 };
         }
         
         // clear
