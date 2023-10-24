@@ -37,8 +37,8 @@ use embedded_graphics::prelude::*;
 use st7789::{Orientation, ST7789};
 
 // reference from https://github.com/vha3/Hunter-Adams-RP2040-Demos/blob/master/Audio/g_Audio_FFT/fft.c
-const NUM_SAMPLES: usize = 256;
-const LOG2_NUM_SAMPLES: u16 = 8;// 256 = 2^8
+const NUM_SAMPLES: usize = 128;
+const LOG2_NUM_SAMPLES: u16 = 7;// 256 = 2^8
 // Length of short (16 bits) minus log2 number of samples (6)
 const SHIFT_AMOUNT: u16 = 16 - LOG2_NUM_SAMPLES;
 
@@ -251,12 +251,17 @@ fn main() -> ! {
             buffer[i] = if adc_8bit > 239 { 239 } else { adc_8bit };
         }
 
-        for i in NUM_SAMPLES/2..240 { // show raw input in free space
+        for i in 0..NUM_SAMPLES { // show raw input in free space
             // raw adc_in is 12bit >> 4 => 8bit
             // u8 max is 255
             // need clamp or scale to 240
-            let adc_8bit: u8 = (adc_results[i - (NUM_SAMPLES/2)] >> 4) as u8;
-            buffer[i] = if adc_8bit > 239 { 239 } else { adc_8bit };
+            let adc_8bit: u8 = (adc_results[i] >> 4) as u8;
+            buffer[(NUM_SAMPLES/2) + i] = if adc_8bit > 239 { 239 } else { adc_8bit };
+        }
+
+        let pulse_strength: u8 = ((amplitudes[2] + amplitudes[4] + amplitudes[6] + amplitudes[8]) >> 5) as u8; // depend ball pulse
+        for i in ((NUM_SAMPLES/2) + NUM_SAMPLES)..240 {
+            buffer[i] = if pulse_strength > 239 { 239 } else { pulse_strength };
         }
         
         // clear
