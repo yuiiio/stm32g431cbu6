@@ -1,4 +1,4 @@
-# stm32f401cdu6-rust
+# stm32g431cbu6-rust
 
 ```
 rustup target add thumbv7em-none-eabihf
