@@ -160,7 +160,7 @@ fn main() -> ! {
     adc.configure_channel(&pb11, Sequence::Seven, SampleTime::Cycles_6_5);
     adc.configure_channel(&pb0,  Sequence::Eight, SampleTime::Cycles_6_5);
     
-    let first_buffer = cortex_m::singleton!(: [u16; 8*NUM_SAMPLES] = [0; 8*NUM_SAMPLES]).unwrap();
+    let first_buffer = cortex_m::singleton!(: [u16; (8*NUM_SAMPLES) + 1] = [0; (8*NUM_SAMPLES) + 1]).unwrap();
     let mut transfer = streams.0.into_circ_peripheral_to_memory_transfer(
         adc.enable_dma(AdcDma::Continuous),
         &mut first_buffer[..],
