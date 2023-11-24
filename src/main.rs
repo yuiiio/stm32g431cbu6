@@ -128,8 +128,52 @@ fn main() -> ! {
     let mut led_blue = gpioc.pc6.into_push_pull_output();
     led_blue.set_low().unwrap();
     let mut cp_delay = cp.SYST.delay(&rcc.clocks);
+    
+    let streams = dp.DMA1.split(&rcc);
+    let config = DmaConfig::default()
+        .transfer_complete_interrupt(false)
+        .circular_buffer(true)
+        .memory_increment(true);
+
+    let pa0 = gpioa.pa0.into_analog();
+    let pa1 = gpioa.pa1.into_analog();
+    let pa2 = gpioa.pa2.into_analog();
+    let pa3 = gpioa.pa3.into_analog();
+    //let pb14 = gpiob.pb14.into_analog();
+    let pb12 = gpiob.pb12.into_analog();
+    let pb1 = gpiob.pb1.into_analog();
+    let pb11 = gpiob.pb11.into_analog();
+    let pb0 = gpiob.pb0.into_analog();
+    
+    let mut adc = dp
+        .ADC1
+        .claim(ClockSource::SystemClock, &rcc, &mut cp_delay, true);
+
+    adc.set_continuous(Continuous::Continuous);
+    adc.reset_sequence();
+    adc.configure_channel(&pa0,  Sequence::One,   SampleTime::Cycles_6_5);
+    adc.configure_channel(&pa1,  Sequence::Two,   SampleTime::Cycles_6_5);
+    adc.configure_channel(&pa2,  Sequence::Three, SampleTime::Cycles_6_5);
+    adc.configure_channel(&pa3,  Sequence::Four,  SampleTime::Cycles_6_5);
+    adc.configure_channel(&pb12, Sequence::Five,  SampleTime::Cycles_6_5);
+    adc.configure_channel(&pb1,  Sequence::Six,   SampleTime::Cycles_6_5);
+    adc.configure_channel(&pb11, Sequence::Seven, SampleTime::Cycles_6_5);
+    adc.configure_channel(&pb0,  Sequence::Eight, SampleTime::Cycles_6_5);
+    
+    let first_buffer = cortex_m::singleton!(: [u16; 8*NUM_SAMPLES] = [0; 8*NUM_SAMPLES]).unwrap();
+    let mut transfer = streams.0.into_circ_peripheral_to_memory_transfer(
+        adc.enable_dma(AdcDma::Continuous),
+        &mut first_buffer[..],
+        config,
+    );
+
+    transfer.start(|adc| adc.start_conversion());
 
     loop {
+        let mut b = [0_u16; 8*NUM_SAMPLES];
+        let r = transfer.read_exact(&mut b);
+        assert!(r == b.len());
+
         led_blue.set_high().unwrap();
         cp_delay.delay_ms(1000_u32);
         led_blue.set_low().unwrap();
