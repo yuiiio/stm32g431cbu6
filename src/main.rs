@@ -13,16 +13,18 @@ extern crate stm32g4xx_hal as hal;
 use core::f32::consts::{PI};
 use micromath::F32Ext;
 
-use hal::{
-    pac::{self, ADC1},
-    gpio::{Speed, PinState},
+use crate::hal::{
     prelude::*,
     spi::*,
     adc::{
-        config::{AdcConfig, Clock, Dma, Resolution, SampleTime, Scan, Sequence},
-        Adc,
+        config::{Continuous, Dma as AdcDma, SampleTime, Sequence},
+        AdcClaim, ClockSource, Temperature, Vref,
     },
-    dma::{config::DmaConfig, PeripheralToMemory, Stream0, StreamsTuple, Transfer},
+    delay::SYSTDelayExt,
+    dma::{config::DmaConfig, stream::DMAExt, TransferExt},
+    gpio::GpioExt,
+    rcc::{Config, RccExt},
+    stm32::Peripherals,
 };
 
 //use cortex_m::asm;
@@ -115,31 +117,17 @@ fn fftfix(fr: &mut [i16; NUM_SAMPLES], fi: &mut [i16; NUM_SAMPLES], sinewave: &[
 
 #[entry]
 fn main() -> ! {
-    let dp = pac::Peripherals::take().unwrap();
+    let dp = Peripherals::take().unwrap();
     let cp = cortex_m::peripheral::Peripherals::take().unwrap();
-
-    // SPI1 (max 42 Mbit/s) (SCK: PB3, MISO: PB4, MOSI: PB5)
-    // SPI2 (max 21 Mbit/s)
-
     let rcc = dp.RCC.constrain();
-    
-    let clocks = rcc
-        .cfgr
-        .use_hse(25.MHz())
-        .sysclk(84.MHz())
-        .hclk(84.MHz())
-        .pclk1(42.MHz())
-        .pclk2(84.MHz())
-        .freeze();
-
-    let gpioc = dp.GPIOC.split();
+    let mut rcc = rcc.freeze(Config::hsi());
+    let gpioa = dp.GPIOA.split(&mut rcc);
+    let gpiob = dp.GPIOB.split(&mut rcc);
+    let gpioc = dp.GPIOC.split(&mut rcc);
     
     let mut led_blue = gpioc.pc13.into_push_pull_output();
     led_blue.set_low();
-
-    let gpiob = dp.GPIOB.split();
-
-    let mut cp_delay = cortex_m::delay::Delay::new(cp.SYST, clocks.sysclk().to_Hz());
+    let mut cp_delay = cp.SYST.delay(&rcc.clocks);
 
     // for st7789 display
     let rst = gpiob.pb6.into_push_pull_output_in_state(PinState::Low); // reset pin
