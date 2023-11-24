@@ -125,10 +125,18 @@ fn main() -> ! {
     let gpiob = dp.GPIOB.split(&mut rcc);
     let gpioc = dp.GPIOC.split(&mut rcc);
     
-    let mut led_blue = gpioc.pc13.into_push_pull_output();
-    led_blue.set_low();
+    let mut led_blue = gpioc.pc6.into_push_pull_output();
+    led_blue.set_low().unwrap();
     let mut cp_delay = cp.SYST.delay(&rcc.clocks);
 
+    loop {
+        led_blue.set_high().unwrap();
+        cp_delay.delay_ms(1000_u32);
+        led_blue.set_low().unwrap();
+        cp_delay.delay_ms(1000_u32);
+    }
+
+    /*
     // for st7789 display
     let rst = gpiob.pb6.into_push_pull_output_in_state(PinState::Low); // reset pin
     let dc = gpiob.pb7.into_push_pull_output_in_state(PinState::Low); // dc pin
@@ -270,4 +278,5 @@ fn main() -> ! {
 
         cp_delay.delay_ms(1000_u32);
     }
+*/
 }
