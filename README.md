@@ -23,5 +23,8 @@ generate rgb565 rawfile using
 ffmpeg -vcodec png -i image.png -vcodec rawvideo -f rawvideo -pix_fmt rgb565 image.raw
 ```
 
+# check binary size
+arm-none-eabi-objcopy -O binary ./target/thumbv7em-none-eabihf/release/stm32g431cbu6-rust ./release.bin
+
 # LICENSE
 GPL-3.0
