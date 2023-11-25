@@ -117,6 +117,17 @@ fn fftfix(fr: &mut [i16; NUM_SAMPLES], fi: &mut [i16; NUM_SAMPLES], sinewave: &[
 
 #[entry]
 fn main() -> ! {
+    let mut sinewave: [i16; NUM_SAMPLES] = [0; NUM_SAMPLES];
+    for i in 0..NUM_SAMPLES {
+        sinewave[i] = ((6.283 * (i as f32 / NUM_SAMPLES as f32)).sin() as f32 * 32768.0 as f32) as i16; // float2fix15 //2^15
+    }
+
+    let mut rsqrt_table: [u8; ((u16::MAX as u32 + 1) / 2) as usize] = [0; ((u16::MAX as u32 + 1) / 2) as usize]; // /2 resolution: 65536 * 18 bit = 65.5... KBytes /2 => 
+    for i in 0..((u16::MAX as u32 + 1) / 2) {
+        let x = i << 1; // *2
+        rsqrt_table[i as usize] = ((1.0 / (x as f32).sqrt()) * u8::MAX as f32) as u8;
+    }
+
     let dp = Peripherals::take().unwrap();
     let cp = cortex_m::peripheral::Peripherals::take().unwrap();
     let rcc = dp.RCC.constrain();
@@ -170,9 +181,42 @@ fn main() -> ! {
     transfer.start(|adc| adc.start_conversion());
 
     loop {
-        let mut b = [0_u16; 8*NUM_SAMPLES];
-        let r = transfer.read_exact(&mut b);
-        assert!(r == b.len());
+        let mut dma_buf = [0_u16; 8*NUM_SAMPLES];
+        let r = transfer.read_exact(&mut dma_buf);
+        assert!(r == dma_buf.len());
+
+        let adc_results: &mut [[u16; NUM_SAMPLES]; 8] = &mut [[0; NUM_SAMPLES]; 8];
+        for i in 0..NUM_SAMPLES {
+            let j = i * 8;
+            adc_results[0][i] = dma_buf[j+0];
+            adc_results[1][i] = dma_buf[j+1];
+            adc_results[2][i] = dma_buf[j+2];
+            adc_results[3][i] = dma_buf[j+3];
+            adc_results[4][i] = dma_buf[j+4];
+            adc_results[5][i] = dma_buf[j+5];
+            adc_results[6][i] = dma_buf[j+6];
+            adc_results[7][i] = dma_buf[j+7];
+        }
+
+        let mut fr: [i16; NUM_SAMPLES] = [0; NUM_SAMPLES];
+        let mut fi: [i16; NUM_SAMPLES] = [0; NUM_SAMPLES];
+        for i in 0..NUM_SAMPLES {
+            fr[i] = adc_results[0][i] as i16;
+        }
+
+        fftfix(&mut fr, &mut fi, &sinewave);
+
+        let mut amplitudes: [u16; NUM_SAMPLES/2] = [0; NUM_SAMPLES/2];
+        for i in 0..NUM_SAMPLES/2 { // 128 ~ 240 should 00
+            amplitudes[i] = (fr[i].abs() + fi[i].abs()) as u16;
+        }
+
+        let pulse_strength: u16 = amplitudes[5] as u16; // depend ball pulse
+        cp_delay.delay_ms(pulse_strength as u32);
+        //let ball_dist: u8 = rsqrt_table[(pulse_strength >> 1) as usize];
+        
+        // failed: seems rsqrt table overflow > 32kBytes
+        //cp_delay.delay_ms(ball_dist as u32);
 
         led_blue.set_high().unwrap();
         cp_delay.delay_ms(1000_u32);
