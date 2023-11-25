@@ -122,9 +122,9 @@ fn main() -> ! {
         sinewave[i] = ((6.283 * (i as f32 / NUM_SAMPLES as f32)).sin() as f32 * 32768.0 as f32) as i16; // float2fix15 //2^15
     }
 
-    let mut rsqrt_table: [u8; ((u16::MAX as u32 + 1) / 2) as usize] = [0; ((u16::MAX as u32 + 1) / 2) as usize]; // /2 resolution: 65536 * 18 bit = 65.5... KBytes /2 => 
-    for i in 0..((u16::MAX as u32 + 1) / 2) {
-        let x = i << 1; // *2
+    let mut rsqrt_table: [u8; ((u16::MAX as u32 + 1) / 4) as usize] = [0; ((u16::MAX as u32 + 1) / 4) as usize]; // /4 resolution: (65536 * 8 bit = 65.5... KBytes) /4 => 
+    for i in 0..((u16::MAX as u32 + 1) / 4) {
+        let x = i << 2; // *4
         rsqrt_table[i as usize] = ((1.0 / (x as f32).sqrt()) * u8::MAX as f32) as u8;
     }
 
@@ -212,11 +212,12 @@ fn main() -> ! {
         }
 
         let pulse_strength: u16 = amplitudes[5] as u16; // depend ball pulse
-        cp_delay.delay_ms(pulse_strength as u32);
-        //let ball_dist: u8 = rsqrt_table[(pulse_strength >> 1) as usize];
+        // success:
+        //cp_delay.delay_ms(pulse_strength as u32);
+        let ball_dist: u8 = rsqrt_table[(pulse_strength >> 2) as usize];
         
         // failed: seems rsqrt table overflow > 32kBytes
-        //cp_delay.delay_ms(ball_dist as u32);
+        cp_delay.delay_ms(ball_dist as u32);
 
         led_blue.set_high().unwrap();
         cp_delay.delay_ms(1000_u32);
