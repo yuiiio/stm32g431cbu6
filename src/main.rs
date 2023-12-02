@@ -171,7 +171,7 @@ fn main() -> ! {
     let streams = dp.DMA1.split(&rcc);
     let config = DmaConfig::default()
         .transfer_complete_interrupt(false)
-        .circular_buffer(true)
+        .circular_buffer(true) // circular mode affects FFT result ?
         .memory_increment(true);
 
     let pa0 = gpioa.pa0.into_analog();
