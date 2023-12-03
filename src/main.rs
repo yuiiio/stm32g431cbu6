@@ -208,6 +208,10 @@ fn main() -> ! {
 
     transfer.start(|adc| adc.start_conversion());
 
+    let buffer1: &mut [u8; 240] = &mut [0; 240];
+    let buffer2: &mut [u8; 240] = &mut [0; 240];
+    let mut flip: bool = true;
+
     loop {
         let mut dma_buf = [0_u16; 8*NUM_SAMPLES];
         let r = transfer.read_exact(&mut dma_buf);
@@ -226,10 +230,12 @@ fn main() -> ! {
             adc_results[7][i] = dma_buf[j+7];
         }
 
+        let adc_results = adc_results[0];
+
         let mut fr: [i16; NUM_SAMPLES] = [0; NUM_SAMPLES];
         let mut fi: [i16; NUM_SAMPLES] = [0; NUM_SAMPLES];
         for i in 0..NUM_SAMPLES {
-            fr[i] = adc_results[0][i] as i16;
+            fr[i] = adc_results[i] as i16;
         }
 
         fftfix(&mut fr, &mut fi, &sinewave);
@@ -243,11 +249,51 @@ fn main() -> ! {
         
         let ball_dist: u16 = rsqrt_table[(pulse_strength >> 3) as usize];
         
-        cp_delay.delay_ms((ball_dist >> 4) as u32);
+        let mut buffer: &mut [u8; 240] = &mut [0; 240];
+        let mut prev: &mut [u8; 240] = &mut [0; 240];
+        if flip == true {
+            buffer = buffer1;
+            prev = buffer2;
+            flip = false;
+        } else {
+            buffer = buffer2;
+            prev = buffer1;
+            flip = true;
+        }
 
-        led_blue.set_high().unwrap();
-        cp_delay.delay_ms(1000_u32);
-        led_blue.set_low().unwrap();
-        cp_delay.delay_ms(1000_u32);
+        for i in 0..NUM_SAMPLES/2 { // show fft result
+            buffer[i] = if amplitudes[i] > 239 { 239 } else { amplitudes[i] as u8 };
+        }
+
+        for i in 0..NUM_SAMPLES { // show raw input in free space
+            let adc_8bit: u8 = (adc_results[i] >> 4) as u8;
+            buffer[(NUM_SAMPLES/2) + i] = if adc_8bit > 239 { 239 } else { adc_8bit };
+        }
+        
+        for i in ((NUM_SAMPLES/2) + NUM_SAMPLES)..240-20 {
+            buffer[i] = if (pulse_strength >> 4) > 239 { 239 } else { (pulse_strength >> 4) as u8 };
+        }
+
+        for i in 240-20..240 {
+            buffer[i] = if (ball_dist >> 0) > 239 { 239 } else { (ball_dist >> 0) as u8 };
+        }
+
+        // clear
+        for i in 0..240 {
+            let value = prev[i as usize] as u8;
+            //for pos in 0.. value { 
+                display.set_pixel(i+80, value as u16, 0b0000000000000000).ok();
+            //}
+        }
+
+        // draw
+        for i in 0..240 {
+            let value = buffer[i as usize] as u8;
+            //for pos in 0.. value { 
+                display.set_pixel(i+80, value as u16, 0b1111111111111111).ok();
+            //}
+        }
+
+        cp_delay.delay_ms(200_u32);
     }
 }
