@@ -190,7 +190,8 @@ fn main() -> ! {
 
     adc.set_continuous(Continuous::Continuous);
     adc.reset_sequence();
-    adc.configure_channel(&pa0,  Sequence::One,   SampleTime::Cycles_6_5);
+    adc.configure_channel(&pa0,  Sequence::One,   SampleTime::Cycles_6_5); // set sampletime to
+                                                                           // fetch ball pulse
     adc.configure_channel(&pa1,  Sequence::Two,   SampleTime::Cycles_6_5);
     adc.configure_channel(&pa2,  Sequence::Three, SampleTime::Cycles_6_5);
     adc.configure_channel(&pa3,  Sequence::Four,  SampleTime::Cycles_6_5);
